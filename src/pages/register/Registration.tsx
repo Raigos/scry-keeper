@@ -42,6 +42,7 @@ export function Registration() {
       <BaseRegistrationCard title="Complete Registration">
         <RegistrationSuccess
           registrationData={state.registrationData}
+          // @ts-ignore
           onSubmit={submitRegistration}
         />
       </BaseRegistrationCard>

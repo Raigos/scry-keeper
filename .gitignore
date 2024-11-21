@@ -115,3 +115,5 @@ typings/
 
 # MacOS specific
 .DS_Store
+
+dist/**/*

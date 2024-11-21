@@ -6,11 +6,13 @@ import { RegistrationForm } from '@/components/registration/RegistrationForm.tsx
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { useWebAuthn } from '@/hooks/useWebAuth'
-import { RegistrationToken } from '@/types/registrationToken.interface'
+import { Friend } from '@/types/friend.interface.ts'
+
+import type { WebAuthnCredential } from '../../types/webauth.interface'
 
 interface RegistrationSuccessProps {
-  registrationData: RegistrationToken
-  onSubmit: (data: FormData, webAuthnData?: PublicKeyCredential) => Promise<void>
+  registrationData: Friend
+  onSubmit: (data: FormData, webAuthnData: WebAuthnCredential) => Promise<void>
 }
 
 export const RegistrationSuccess = ({ registrationData, onSubmit }: RegistrationSuccessProps) => {
@@ -22,6 +24,7 @@ export const RegistrationSuccess = ({ registrationData, onSubmit }: Registration
     try {
       setFingerprintError(null)
       const credential = await registerFingerprint(registrationData.name)
+      // @ts-ignore
       setWebAuthnData(credential)
     } catch (error) {
       setFingerprintError(error instanceof Error ? error.message : 'Fingerprint registration failed')

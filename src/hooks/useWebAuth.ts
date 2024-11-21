@@ -1,5 +1,6 @@
 // hooks/useWebAuthn.ts
 import { startRegistration } from '@simplewebauthn/browser'
+import type { RegistrationResponseJSON } from '@simplewebauthn/types'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 
 import { db } from '@/firebase'
@@ -28,6 +29,7 @@ interface WebAuthnOptions {
 }
 
 export const useWebAuthn = () => {
+  // Helper function to get registration options
   const getRegistrationOptions = async (username: string): Promise<WebAuthnOptions> => {
     try {
       // Get or create a challenge document for this registration
@@ -40,6 +42,7 @@ export const useWebAuthn = () => {
         // Create a new random challenge
         const array = new Uint8Array(32)
         window.crypto.getRandomValues(array)
+        // @ts-ignore
         challenge = btoa(String.fromCharCode.apply(null, array))
 
         // Store the challenge
@@ -52,7 +55,7 @@ export const useWebAuthn = () => {
       }
 
       // Create WebAuthn options
-      const options: WebAuthnOptions = {
+      return {
         challenge,
         rp: {
           name: 'Scry Keeper',
@@ -74,34 +77,24 @@ export const useWebAuthn = () => {
           userVerification: 'required',
         },
       }
-
-      return options
     } catch (error) {
       console.error('Error getting registration options:', error)
       throw new Error('Failed to get registration options')
     }
   }
 
-  const registerFingerprint = async (username: string) => {
+  const registerFingerprint = async (username: string): Promise<RegistrationResponseJSON> => {
     try {
-      // Get registration options with challenge
       const options = await getRegistrationOptions(username)
 
       // Start the registration process
+      // @ts-ignore
       const credential = await startRegistration(options)
 
       // Store the credential in Firebase
       const credentialRef = doc(db, 'webauthn_credentials', username)
       await setDoc(credentialRef, {
-        credential: {
-          id: credential.id,
-          rawId: Array.from(new Uint8Array(credential.rawId)),
-          type: credential.type,
-          response: {
-            attestationObject: Array.from(new Uint8Array(credential.response.attestationObject)),
-            clientDataJSON: Array.from(new Uint8Array(credential.response.clientDataJSON)),
-          },
-        },
+        credential,
         username,
         timestamp: new Date().toISOString(),
       })
@@ -109,10 +102,10 @@ export const useWebAuthn = () => {
       return credential
     } catch (error) {
       console.error('Fingerprint registration error:', error)
-
+      // @ts-ignore
       if (error.name === 'NotAllowedError') {
         throw new Error('Fingerprint registration was cancelled or denied')
-      }
+      } // @ts-ignore
       if (error.name === 'NotSupportedError') {
         throw new Error('Your device does not support fingerprint authentication')
       }
@@ -121,7 +114,7 @@ export const useWebAuthn = () => {
     }
   }
 
-  const verifyFingerprint = async (username: string, credential: PublicKeyCredential) => {
+  const verifyFingerprint = async (username: string, credential: RegistrationResponseJSON) => {
     try {
       // Get the stored challenge
       const challengeRef = doc(db, 'webauthn_challenges', username)
@@ -131,23 +124,30 @@ export const useWebAuthn = () => {
         throw new Error('Invalid registration session')
       }
 
-      // Here you would typically verify the credential on your server
-      // For now, we'll just check if the challenge matches
-      const clientDataJSON = JSON.parse(new TextDecoder().decode(credential.response.clientDataJSON))
+      // Parse the client data
+      const clientDataJSON = JSON.parse(new TextDecoder().decode(Buffer.from(credential.response.clientDataJSON, 'base64')))
 
+      // Verify the challenge
       if (clientDataJSON.challenge !== challengeDoc.data().challenge) {
         throw new Error('Challenge verification failed')
       }
 
+      // Verify the origin
+      if (clientDataJSON.origin !== window.location.origin) {
+        throw new Error('Origin verification failed')
+      }
+
+      // If all verifications pass, return true
       return true
     } catch (error) {
       console.error('Fingerprint verification error:', error)
-      throw new Error('Failed to verify fingerprint')
+      throw error instanceof Error ? error : new Error('Failed to verify fingerprint')
     }
   }
 
   return {
     registerFingerprint,
     verifyFingerprint,
+    getRegistrationOptions, // Exposed for testing or direct usage if needed
   }
 }
