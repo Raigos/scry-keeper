@@ -31,10 +31,11 @@ export const useRegistrationFlow = () => {
     }
   }
 
-  const submitRegistration = async (formData: FormData) => {
+  const submitRegistration = async (formData: FormData, webAuthnData?: PublicKeyCredential) => {
     console.log('Registration submitted with data:', {
       deviceName: formData.get('deviceName'),
       pin: formData.get('pin'),
+      webAuthnCredential: webAuthnData,
     })
   }
 
