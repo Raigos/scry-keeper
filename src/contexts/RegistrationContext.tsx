@@ -1,9 +1,9 @@
 import { createContext, ReactNode, useContext, useReducer } from 'react'
 
-import { RegistrationToken } from '../types/registrationToken.interface'
+import { Friend } from '@/types/friend.interface'
 
 interface RegistrationState {
-  registrationData: RegistrationToken | null
+  registrationData: Friend | null
   loading: boolean
   error: Error | null
   isInitial: boolean
@@ -13,7 +13,7 @@ interface RegistrationState {
 type RegistrationAction =
   | { type: 'START_VERIFICATION' }
   | { type: 'SET_ERROR'; payload: Error }
-  | { type: 'SET_REGISTRATION_DATA'; payload: RegistrationToken }
+  | { type: 'SET_REGISTRATION_DATA'; payload: Friend }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'RESET' }
 
@@ -33,14 +33,12 @@ const RegistrationContext = createContext<
   | undefined
 >(undefined)
 
-// Create the provider component
 export function RegistrationProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(registrationReducer, initialState)
 
   return <RegistrationContext.Provider value={{ state, dispatch }}>{children}</RegistrationContext.Provider>
 }
 
-// Create a custom hook for using the registration context
 export function useRegistration() {
   const context = useContext(RegistrationContext)
   if (context === undefined) {

@@ -1,4 +1,4 @@
-export interface RegistrationToken {
+export interface Friend {
   name: string
   deviceCredential: string | null
 }

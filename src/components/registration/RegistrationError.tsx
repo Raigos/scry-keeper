@@ -1,18 +1,36 @@
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+
 interface RegistrationErrorProps {
   error: Error
 }
 
-export const RegistrationError = ({ error }: RegistrationErrorProps) => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md w-full">
-      <h2 className="text-red-800 text-xl font-semibold mb-2">Registration Error</h2>
-      <p className="text-red-600">{error.message}</p>
-      <button
-        onClick={() => (window.location.href = '/')}
-        className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-      >
-        Return Home
-      </button>
-    </div>
-  </div>
-)
+export const RegistrationError = ({ error }: RegistrationErrorProps) => {
+  if (error.message === 'Friend not found') {
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>Registration Error</AlertTitle>
+        <AlertDescription>
+          We couldn't find your account in our system. Please contact your administrator if you believe this is a mistake.
+        </AlertDescription>
+      </Alert>
+    )
+  }
+
+  if (error.message === 'Device already registered') {
+    return (
+      <Alert>
+        <AlertTitle>Device Already Registered</AlertTitle>
+        <AlertDescription>
+          This account has already been registered with a device. If you need to register a new device, please contact support.
+        </AlertDescription>
+      </Alert>
+    )
+  }
+
+  return (
+    <Alert variant="destructive">
+      <AlertTitle>Registration Error</AlertTitle>
+      <AlertDescription>{error.message}</AlertDescription>
+    </Alert>
+  )
+}

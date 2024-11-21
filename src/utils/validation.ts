@@ -7,5 +7,10 @@ export const isRegistrationToken = (data: unknown): data is RegistrationToken =>
 
   const token = data as Record<string, unknown>
 
-  return 'id' in token && typeof token.id === 'string' && 'used' in token && typeof token.used === 'boolean'
+  return (
+    'deviceCredential' in token &&
+    (token.deviceCredential === 'null' || typeof token.deviceCredential === 'string') &&
+    'name' in token &&
+    typeof token.name === 'string'
+  )
 }

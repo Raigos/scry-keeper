@@ -1,40 +1,61 @@
+import { useEffect } from 'react'
+
 import { useParams } from 'react-router-dom'
 
-import { RegistrationError } from '../../components/registration/RegistrationError'
-import { RegistrationSuccess } from '../../components/registration/RegistrationSuccess'
-import { useRegistration } from '../../contexts/RegistrationContext' // Add this import
-import { useRegistrationVerification } from '../../hooks/useRegistrationVerification'
+import { BaseRegistrationCard } from '@/components/registration/BaseRegistrationCard'
+import { RegistrationError } from '@/components/registration/RegistrationError'
+import { RegistrationLoading } from '@/components/registration/RegistrationLoading'
+import { RegistrationSuccess } from '@/components/registration/RegistrationSuccess'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { useRegistration } from '@/contexts/RegistrationContext'
+import { useRegistrationFlow } from '@/hooks/useRegistrationFlow'
 
-function Registration() {
+export function Registration() {
   const { userName } = useParams<{ userName: string }>()
-  const { state } = useRegistration() // We only need state here since the hook will handle dispatch
-  useRegistrationVerification(userName) // This hook will now use the context internally
+  const { state } = useRegistration()
+  const { verifyUsername, submitRegistration } = useRegistrationFlow()
+
+  useEffect(() => {
+    if (userName) {
+      verifyUsername(userName)
+    }
+  }, [userName])
 
   if (state.loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Checking Registration...</h2>
-        </div>
-      </div>
+      <BaseRegistrationCard>
+        <RegistrationLoading userName={userName} />
+      </BaseRegistrationCard>
     )
   }
 
   if (state.error) {
-    return <RegistrationError error={state.error} />
-  }
-
-  if (!state.registrationData) {
     return (
-      <>Nodata!</>
-      // <Navigate
-      //   to="/"
-      //   replace
-      // />
+      <BaseRegistrationCard title="Registration Error">
+        <RegistrationError error={state.error} />
+      </BaseRegistrationCard>
     )
   }
 
-  return <RegistrationSuccess registrationData={state.registrationData} />
+  if (state.registrationData) {
+    return (
+      <BaseRegistrationCard title="Complete Registration">
+        <RegistrationSuccess
+          registrationData={state.registrationData}
+          onSubmit={submitRegistration}
+        />
+      </BaseRegistrationCard>
+    )
+  }
+
+  return (
+    <BaseRegistrationCard title="Something went wrong">
+      <Alert>
+        <AlertTitle>Unexpected State</AlertTitle>
+        <AlertDescription>We encountered an unexpected error. Please try again or contact support if the issue persists.</AlertDescription>
+      </Alert>
+    </BaseRegistrationCard>
+  )
 }
 
 export default Registration
